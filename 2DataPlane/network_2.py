@@ -87,6 +87,8 @@ class Host:
    
     # ID of next packet
     ID = 0
+    # store message if incomplete
+    message = ''
  
     ##@param addr: address of this node represented as an integer
     def __init__(self, addr):
@@ -135,10 +137,26 @@ class Host:
             
 
     ## receive packet from the network layer
-    def udt_receive(self):
-        pkt_S = self.in_intf_L[0].get()
+    def udt_receive(self): 
+        pkt_S = self.in_intf_L[0].get() 
         if pkt_S is not None:
-            print('%s: received packet "%s"' % (self, pkt_S))
+            if self.message is '':
+                # set message to the entire received packet
+                # keeping the header and marking it as not
+                # segmented
+                self.message = pkt_S
+#                self.message[7] = '0' 
+            elif pkt_S[7] is '1':
+                # concat the payload onto current message 
+                # and wait for next packet 
+                self.message += pkt_S[12:] 
+            else:           
+                # concat the payload onto current message,
+                # we are done now, so print final message,
+                # reset message variable 
+                self.message += pkt_S[12:]
+                print('%s: received packet "%s"' % (self, self.message))
+                self.message = ''
        
     ## thread target for the host to keep receiving data
     def run(self):
