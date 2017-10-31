@@ -79,7 +79,12 @@ class NetworkPacket:
         # get payload
         data_S = byte_S[self.head_length : ]
         return self(dst_addr, ID, fragflag, offset, data_S)
-   
+
+    def ceiling(a, b):
+        result = float(a) / float(b)
+        if result % 1 != 0:
+            return int(result) + 1
+        return int(result)   
    
 
 ## Implements a network host for receiving and transmitting data
@@ -110,7 +115,7 @@ class Host:
         print('Payload is of size: %d' % payload_size)
                
         # get number of segments needed
-        segments = int(payload_size / (self.out_intf_L[0].mtu - NetworkPacket.head_length) + 1)
+        segments = NetworkPacket.ceiling(payload_size, (self.out_intf_L[0].mtu - NetworkPacket.head_length))
         print('need %d segments' % segments)
         # divide into segments of size mtu and send as packets
         for i in range(segments):
@@ -202,13 +207,36 @@ class Router:
                 pkt_S = self.in_intf_L[i].get()
                 #if packet exists make a forwarding decision
                 if pkt_S is not None:
-                    p = NetworkPacket.from_byte_S(pkt_S) #parse a packet out
-                    # HERE you will need to implement a lookup into the 
-                    # forwarding table to find the appropriate outgoing interface
-                    # for now we assume the outgoing interface is also i
-                    self.out_intf_L[i].put(p.to_byte_S(), True)
-                    print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
-                        % (self, p, i, i, self.out_intf_L[i].mtu))
+                    payload_length = len(pkt_S[12:].encode('utf-8'))
+                    segments = NetworkPacket.ceiling(payload_length, (self.out_intf_L[i].mtu - NetworkPacket.head_length))
+                    print('payload_length: %d segments: %d mtu: %d' % (payload_length, segments, self.out_intf_L[i].mtu))                    
+                    # get packet's header values
+                    dst_addr = pkt_S[:4]
+                    ID = pkt_S[5:6]
+                    fragflag = pkt_S[7]
+                    offset = pkt_S[8:11]    
+                    # send each segment
+                    for s in range(segments):
+                        # get start and end offset values for payload
+                        start = s * (self.out_intf_L[i].mtu - NetworkPacket.head_length)
+                        end = (s + 1) * (self.out_intf_L[i].mtu - NetworkPacket.head_length)
+                        # new fragmentation flag
+                        nfragflag = '1'
+                        # set new fragmentation flag to 0
+                        # if and only if the old frag flag
+                        # was 0 and this is the last segment
+                        # of this packet
+                        if fragflag is '0' and end >= payload_length:
+                            nfragflag = '0'
+                        p = NetworkPacket(str(dst_addr), str(ID), str(nfragflag), str(int(offset) + start), str(pkt_S[start:end]))
+ 
+#                        p = NetworkPacket.from_byte_S(pkt_S) #parse a packet out
+                        # HERE you will need to implement a lookup into the 
+                        # forwarding table to find the appropriate outgoing interface
+                        # for now we assume the outgoing interface is also i
+                        self.out_intf_L[i].put(p.to_byte_S(), True)
+                        print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
+                            % (self, p, i, i, self.out_intf_L[i].mtu))
             except queue.Full:
                 print('%s: packet "%s" lost on interface %d' % (self, p, i))
                 pass
