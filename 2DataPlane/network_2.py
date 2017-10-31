@@ -107,7 +107,7 @@ class Host:
     def udt_send(self, dst_addr, data_S):
        
         payload_size = len(data_S.encode('utf-8')) 
-#        print('Payload is of size: %d' % payload_size)
+        print('Payload is of size: %d' % payload_size)
                
         # get number of segments needed
         segments = int(payload_size / (self.out_intf_L[0].mtu - NetworkPacket.head_length) + 1)
@@ -146,6 +146,10 @@ class Host:
                 # segmented
                 self.message = pkt_S
 #                self.message[7] = '0' 
+                if pkt_S[7] is '0':
+                    # if message is not segmented, print and reset 
+                    print('%s: received packet "%s"' % (self, self.message))
+                    self.message = '' 
             elif pkt_S[7] is '1':
                 # concat the payload onto current message 
                 # and wait for next packet 

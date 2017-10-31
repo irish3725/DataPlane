@@ -8,12 +8,12 @@ import link_2 as link
 import threading
 from time import sleep
 
-def payload():
+def payload(length=39):
     pay = ''
     # change range to 39 for 80 bytes
     # change range to 26 for 74 bytes
     # change range to 21 for 44 bytes
-    for i in range(39):
+    for i in range(length):
         pay += str(i)
     return pay
 
@@ -55,8 +55,8 @@ if __name__ == '__main__':
     
     #create some send events    
     for i in range(3):
-        client.udt_send(2, 'Sample data %s' % payload())
-    
+        # send strings that are increasing in size up to 80B
+        client.udt_send(2, 'Sample data %s' % payload((i+1)*13))
     
     #give the network sufficient time to transfer all packets before quitting
     sleep(simulation_time)
