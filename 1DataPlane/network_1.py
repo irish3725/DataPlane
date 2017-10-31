@@ -34,6 +34,8 @@ class Interface:
 class NetworkPacket:
     ## packet encoding lengths 
     dst_addr_S_length = 5
+    offset_length = 4
+    seg_bit = 1
     
     ##@param dst_addr: address of the destination host
     # @param data_S: packet payload
@@ -48,7 +50,7 @@ class NetworkPacket:
     ## convert packet to a byte string for transmission over links
     def to_byte_S(self):
         byte_S = str(self.dst_addr).zfill(self.dst_addr_S_length)
-        byte_S += " " + self.data_S
+        byte_S += self.data_S
         return byte_S
     
     ## extract a packet object from a byte string
@@ -81,28 +83,21 @@ class Host:
     def udt_send(self, dst_addr, data_S):
        
         payload_size = len(data_S.encode('utf-8')) 
-        print('Payload is of size: %d' % payload_size)
+#        print('Payload is of size: %d' % payload_size)
                
         # get number of segments needed
         segments = int(payload_size / (self.out_intf_L[0].mtu - 5) + 1)
-        print('need %d segments' % segments)
+#        print('need %d segments' % segments)
         # divide into segments of size mtu and send as packets
         for i in range(segments):
             # where to start string
-#            offset = (i - 1) * (self.out_intf_L[0].mtu - 5)
             offset = i * (self.out_intf_L[0].mtu - 5)
             # where to stop string
-#            end = i * (self.out_intf_L[0].mtu - 5)
             end = (i + 1) * (self.out_intf_L[0].mtu - 5)
-            print('offset is %d and end is %d' % (offset,end))
+#            print('offset is %d and end is %d' % (offset,end))
             p = NetworkPacket(dst_addr, data_S[offset:end])
             self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
             print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
-
-#        else:
-#            p = NetworkPacket(dst_addr, data_S)
-#            self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
-#            print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
 
     ## receive packet from the network layer
     def udt_receive(self):
