@@ -3,14 +3,14 @@ Created on Oct 12, 2016
 
 @author: mwitt_000
 '''
-import network
-import link
+import network1 as network
+import link1 as link
 import threading
 from time import sleep
 
 def payload():
     pay = ''
-    for i in range(81):
+    for i in range(39):
         pay += str(i)
     return pay
 

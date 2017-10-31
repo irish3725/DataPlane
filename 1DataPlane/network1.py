@@ -48,7 +48,7 @@ class NetworkPacket:
     ## convert packet to a byte string for transmission over links
     def to_byte_S(self):
         byte_S = str(self.dst_addr).zfill(self.dst_addr_S_length)
-        byte_S += self.data_S
+        byte_S += " " + self.data_S
         return byte_S
     
     ## extract a packet object from a byte string
@@ -58,9 +58,8 @@ class NetworkPacket:
         dst_addr = int(byte_S[0 : NetworkPacket.dst_addr_S_length])
         data_S = byte_S[NetworkPacket.dst_addr_S_length : ]
         return self(dst_addr, data_S)
-    
-
-    
+   
+   
 
 ## Implements a network host for receiving and transmitting data
 class Host:
@@ -80,10 +79,17 @@ class Host:
     # @param dst_addr: destination address for the packet
     # @param data_S: data being transmitted to the network layer
     def udt_send(self, dst_addr, data_S):
+       
+        payload_size = len(data_S.encode('utf-8')) 
+        print('Payload is of size: %d' % payload_size)
+       
+        if payload_size > self.out_intf_L[0].mtu:
+            print('found packet that is too large')
+ 
         p = NetworkPacket(dst_addr, data_S)
         self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
         print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
-        
+
     ## receive packet from the network layer
     def udt_receive(self):
         pkt_S = self.in_intf_L[0].get()
