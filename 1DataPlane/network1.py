@@ -82,15 +82,20 @@ class Host:
        
         payload_size = len(data_S.encode('utf-8')) 
         print('Payload is of size: %d' % payload_size)
-
                
-#        if payload_size + 5 > self.out_intf_L[0].mtu - 5:
-            # get number of segments needed
+        # get number of segments needed
         segments = int(payload_size / (self.out_intf_L[0].mtu - 5) + 1)
         print('need %d segments' % segments)
         # divide into segments of size mtu and send as packets
         for i in range(segments):
-            p = NetworkPacket(dst_addr, data_S)
+            # where to start string
+#            offset = (i - 1) * (self.out_intf_L[0].mtu - 5)
+            offset = i * (self.out_intf_L[0].mtu - 5)
+            # where to stop string
+#            end = i * (self.out_intf_L[0].mtu - 5)
+            end = (i + 1) * (self.out_intf_L[0].mtu - 5)
+            print('offset is %d and end is %d' % (offset,end))
+            p = NetworkPacket(dst_addr, data_S[offset:end])
             self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
             print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
 
