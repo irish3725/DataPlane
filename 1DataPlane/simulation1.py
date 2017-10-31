@@ -10,6 +10,9 @@ from time import sleep
 
 def payload():
     pay = ''
+    # change range to 39 for 80 bytes
+    # change range to 26 for 74 bytes
+    # change range to 21 for 44 bytes
     for i in range(39):
         pay += str(i)
     return pay

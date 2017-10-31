@@ -82,13 +82,22 @@ class Host:
        
         payload_size = len(data_S.encode('utf-8')) 
         print('Payload is of size: %d' % payload_size)
-       
-        if payload_size > self.out_intf_L[0].mtu:
-            print('found packet that is too large')
- 
-        p = NetworkPacket(dst_addr, data_S)
-        self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
-        print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
+
+               
+#        if payload_size + 5 > self.out_intf_L[0].mtu - 5:
+            # get number of segments needed
+        segments = int(payload_size / (self.out_intf_L[0].mtu - 5) + 1)
+        print('need %d segments' % segments)
+        # divide into segments of size mtu and send as packets
+        for i in range(segments):
+            p = NetworkPacket(dst_addr, data_S)
+            self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
+            print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
+
+#        else:
+#            p = NetworkPacket(dst_addr, data_S)
+#            self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
+#            print('%s: sending packet "%s" out interface with mtu=%d' % (self, p, self.out_intf_L[0].mtu))
 
     ## receive packet from the network layer
     def udt_receive(self):
