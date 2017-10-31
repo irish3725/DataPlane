@@ -34,8 +34,6 @@ class Interface:
 class NetworkPacket:
     ## packet encoding lengths 
     dst_addr_S_length = 5
-    offset_length = 4
-    seg_bit = 1
     
     ##@param dst_addr: address of the destination host
     # @param data_S: packet payload
