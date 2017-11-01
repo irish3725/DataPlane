@@ -112,11 +112,9 @@ class Host:
     def udt_send(self, dst_addr, data_S):
        
         payload_size = len(data_S.encode('utf-8')) 
-        print('Payload is of size: %d' % payload_size)
                
         # get number of segments needed
         segments = NetworkPacket.ceiling(payload_size, (self.out_intf_L[0].mtu - NetworkPacket.head_length))
-        print('need %d segments' % segments)
         # divide into segments of size mtu and send as packets
         for i in range(segments):
             # where to start string
@@ -209,12 +207,11 @@ class Router:
                 if pkt_S is not None:
                     payload_length = len(pkt_S[12:].encode('utf-8'))
                     segments = NetworkPacket.ceiling(payload_length, (self.out_intf_L[i].mtu - NetworkPacket.head_length))
-                    print('payload_length: %d segments: %d mtu: %d' % (payload_length, segments, self.out_intf_L[i].mtu))                    
                     # get packet's header values
-                    dst_addr = pkt_S[:4]
-                    ID = pkt_S[5:6]
+                    dst_addr = pkt_S[:5]
+                    ID = pkt_S[5:7]
                     fragflag = pkt_S[7]
-                    offset = pkt_S[8:11]    
+                    offset = pkt_S[8:12]    
                     # send each segment
                     for s in range(segments):
                         # get start and end offset values for payload
