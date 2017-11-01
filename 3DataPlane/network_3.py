@@ -131,7 +131,6 @@ class Host:
             fragflag = 1 
             if end >= payload_size:
                 fragflag = 0
-            print('my source address is %s' % self.addr)    
             #using self.addr as source address
             p = NetworkPacket(self.addr, dst_addr, self.ID, fragflag, offset, data_S[offset:end])
             self.out_intf_L[0].put(p.to_byte_S()) #send packets always enqueued successfully
@@ -191,12 +190,13 @@ class Router:
     ##@param name: friendly router name for debugging
     # @param intf_count: the number of input and output interfaces 
     # @param max_queue_size: max queue length (passed to Interface)
-    def __init__(self, name, intf_count, max_queue_size):
+    def __init__(self, name, intf_count, max_queue_size, route_table):
         self.stop = False #for thread termination
         self.name = name
         #create a list of interfaces
         self.in_intf_L = [Interface(max_queue_size) for _ in range(intf_count)]
         self.out_intf_L = [Interface(max_queue_size) for _ in range(intf_count)]
+        self.route_table = route_table
 
     ## called when printing the object
     def __str__(self):
@@ -223,6 +223,19 @@ class Router:
                     fragflag = pkt_S[12]
                     offset = pkt_S[13:18]    
                     payload = pkt_S[18:]
+                    # set intf to bogus value so it crashes
+                    # when rule isn't found 
+                    intf = 1000000000 
+                    # iterate through each rule 
+                    for rule in self.route_table:
+                        # if first value matches src_addr 
+                        if rule[0] is '*' or rule[0] == src_addr:
+                            # and second rule matches dst_addr 
+                            if rule[1] is '*' or rule[1] == dst_addr:
+                                # then set interface to third rule 
+                                intf = rule[2] 
+                                # don't keep cycling through rules 
+                                break
                     # send each segment
                     for s in range(segments):
                         # get start and end offset values for payload
@@ -244,11 +257,11 @@ class Router:
                         # HERE you will need to implement a lookup into the 
                         # forwarding table to find the appropriate outgoing interface
                         # for now we assume the outgoing interface is also i
-                        self.out_intf_L[i].put(p.to_byte_S(), True)
+                        self.out_intf_L[intf].put(p.to_byte_S(), True)
                         print('%s: forwarding packet "%s" from interface %d to %d with mtu %d' \
-                            % (self, p, i, i, self.out_intf_L[i].mtu))
+                            % (self, p, i, intf, self.out_intf_L[intf].mtu))
             except queue.Full:
-                print('%s: packet "%s" lost on interface %d' % (self, p, i))
+                print('%s: packet "%s" lost on interface %d' % (self, p, intf))
                 pass
                 
     ## thread target for the host to keep forwarding data
