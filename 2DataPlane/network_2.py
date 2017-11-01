@@ -212,6 +212,7 @@ class Router:
                     ID = pkt_S[5:7]
                     fragflag = pkt_S[7]
                     offset = pkt_S[8:12]    
+                    payload = pkt_S[12:] 
                     # send each segment
                     for s in range(segments):
                         # get start and end offset values for payload
@@ -225,7 +226,7 @@ class Router:
                         # of this packet
                         if fragflag is '0' and end >= payload_length:
                             nfragflag = '0'
-                        p = NetworkPacket(str(dst_addr), str(ID), str(nfragflag), str(int(offset) + start), str(pkt_S[start:end]))
+                        p = NetworkPacket(str(dst_addr), str(ID), str(nfragflag), str(int(offset) + start), str(payload[start:end]))
  
 #                        p = NetworkPacket.from_byte_S(pkt_S) #parse a packet out
                         # HERE you will need to implement a lookup into the 
